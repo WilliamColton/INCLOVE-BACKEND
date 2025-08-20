@@ -1,12 +1,16 @@
 package forfun.williamcolton.c.inclove.controller;
 
-import forfun.williamcolton.c.inclove.dto.auth.*;
+import forfun.williamcolton.c.inclove.dto.auth.req.GoogleLoginDto;
+import forfun.williamcolton.c.inclove.dto.auth.req.LoginDto;
+import forfun.williamcolton.c.inclove.dto.auth.req.RegisterDto;
+import forfun.williamcolton.c.inclove.dto.auth.req.VerificationCodeDto;
+import forfun.williamcolton.c.inclove.dto.auth.resp.LoginResponseDto;
+import forfun.williamcolton.c.inclove.dto.auth.resp.RegisterResponseDto;
 import forfun.williamcolton.c.inclove.service.AuthService;
 import forfun.williamcolton.c.inclove.service.serviceImpl.GoogleAuthService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -21,28 +25,33 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponseDto login(@RequestBody LoginDto loginDto) {
+    public LoginResponseDto login(@Valid @RequestBody LoginDto loginDto) {
         return authService.login(loginDto);
     }
 
     @PostMapping("/login/google")
-    public LoginResponseDto googleLogin(@RequestBody GoogleLoginDto googleLoginDto) {
+    public LoginResponseDto googleLogin(@Valid @RequestBody GoogleLoginDto googleLoginDto) {
         return googleAuthService.googleLogin(googleLoginDto);
     }
 
     @PostMapping("/register")
-    public RegisterResponseDto register(@RequestBody RegisterDto registerDto) {
+    public RegisterResponseDto register(@Valid @RequestBody RegisterDto registerDto) {
         return authService.register(registerDto);
     }
 
     @PostMapping("/register/email")
-    public RegisterResponseDto resendRegisterEmail(@RequestBody RegisterDto registerDto) {
+    public RegisterResponseDto resendRegisterEmail(@Valid @RequestBody RegisterDto registerDto) {
         return authService.resendRegisterEmail(registerDto);
     }
 
     @PostMapping("/register/verificationCode")
-    public RegisterResponseDto verifyRegisterVerificationCode(VerificationCodeDto verificationCodeDto) {
+    public RegisterResponseDto verifyRegisterVerificationCode(@Valid @RequestBody VerificationCodeDto verificationCodeDto) {
         return authService.verifyRegisterVerificationCode(verificationCodeDto);
+    }
+
+    @GetMapping("/me")
+    public String getCurrentUserId(Authentication authentication) {
+        return (String) authentication.getPrincipal();
     }
 
 }

@@ -1,4 +1,4 @@
-package forfun.williamcolton.c.inclove.dto.auth;
+package forfun.williamcolton.c.inclove.dto.auth.resp;
 
 import lombok.Value;
 
