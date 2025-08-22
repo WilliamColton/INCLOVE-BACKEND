@@ -1,6 +1,10 @@
 package forfun.williamcolton.c.inclove.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import forfun.williamcolton.c.inclove.filter.JwtAuthFilter;
+import forfun.williamcolton.c.inclove.global.GlobalApiResponse;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,8 +19,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+import static forfun.williamcolton.c.inclove.exception.AuthErrorCode.NO_PERMISSION;
+import static forfun.williamcolton.c.inclove.exception.AuthErrorCode.UNAUTHORIZED;
+
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final ObjectMapper objectMapper;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -33,18 +43,31 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthFilter(),
-                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint((_, res, _) -> {
+                            res.setStatus(HttpServletResponse.SC_OK);
+                            res.setContentType("application/json;charset=UTF-8");
+                            var body = GlobalApiResponse.error(UNAUTHORIZED.getCode(), UNAUTHORIZED.getMessage());
+                            res.getWriter().write(objectMapper.writeValueAsString(body));
+                        })
+
+                        .accessDeniedHandler((_, res, _) -> {
+                            res.setStatus(HttpServletResponse.SC_OK);
+                            res.setContentType("application/json;charset=UTF-8");
+                            var body = GlobalApiResponse.error(NO_PERMISSION.getCode(), NO_PERMISSION.getMessage());
+                            res.getWriter().write(objectMapper.writeValueAsString(body));
+                        }));
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
-        // 前端本地调试域名（按需改成你的前端地址；生产环境强烈建议写死具体域名）
         c.setAllowedOriginPatterns(List.of(
                 "*"
         ));
-        c.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        c.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         c.setAllowedHeaders(List.of("*"));
         c.setAllowCredentials(true);
 

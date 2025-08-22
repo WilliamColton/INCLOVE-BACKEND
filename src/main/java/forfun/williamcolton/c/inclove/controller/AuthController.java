@@ -10,7 +10,10 @@ import forfun.williamcolton.c.inclove.service.AuthService;
 import forfun.williamcolton.c.inclove.service.serviceImpl.GoogleAuthServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
@@ -40,18 +43,13 @@ public class AuthController {
     }
 
     @PostMapping("/register/email")
-    public RegisterResponseDto resendRegisterEmail(@Valid @RequestBody RegisterDto registerDto) {
-        return authService.resendRegisterEmail(registerDto);
+    public void resendRegisterEmail(Authentication authentication) {
+        authService.resendRegisterEmail((String) authentication.getPrincipal());
     }
 
     @PostMapping("/register/verificationCode")
-    public RegisterResponseDto verifyRegisterVerificationCode(@Valid @RequestBody VerificationCodeDto verificationCodeDto) {
-        return authService.verifyRegisterVerificationCode(verificationCodeDto);
-    }
-
-    @GetMapping("/me")
-    public String getCurrentUserId(Authentication authentication) {
-        return (String) authentication.getPrincipal();
+    public void verifyRegisterVerificationCode(@Valid @RequestBody VerificationCodeDto verificationCodeDto, Authentication authentication) {
+        authService.verifyRegisterVerificationCode(verificationCodeDto, (String) authentication.getPrincipal());
     }
 
 }

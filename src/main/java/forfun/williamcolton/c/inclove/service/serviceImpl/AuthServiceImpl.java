@@ -1,7 +1,6 @@
 package forfun.williamcolton.c.inclove.service.serviceImpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import forfun.williamcolton.c.inclove.dto.auth.req.LoginDto;
 import forfun.williamcolton.c.inclove.dto.auth.req.RegisterDto;
 import forfun.williamcolton.c.inclove.dto.auth.req.VerificationCodeDto;
@@ -21,7 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 
 @Service
-public class AuthServiceImpl extends ServiceImpl<UserAuthMapper, UserAuth> implements AuthService {
+public class AuthServiceImpl extends BaseServiceImpl<UserAuthMapper, UserAuth> implements AuthService {
 
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
@@ -32,8 +31,8 @@ public class AuthServiceImpl extends ServiceImpl<UserAuthMapper, UserAuth> imple
     }
 
     public LoginResponseDto login(LoginDto loginDto) {
-        UserAuth userAuth = getOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, loginDto.getUserId()));
-        if (userAuth == null || !passwordEncoder.matches(loginDto.getRawPassword(), userAuth.getEncodedPassword())) {
+        UserAuth userAuth = getOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, loginDto.userId()));
+        if (userAuth == null || !passwordEncoder.matches(loginDto.rawPassword(), userAuth.getEncodedPassword())) {
             throw new BusinessException(AuthErrorCode.WRONG_CREDENTIALS);
         }
         if (!Boolean.TRUE.equals(userAuth.getVerified())) {
@@ -45,32 +44,32 @@ public class AuthServiceImpl extends ServiceImpl<UserAuthMapper, UserAuth> imple
 
     @Override
     public RegisterResponseDto register(RegisterDto registerDto) {
-        long userCount = count(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, registerDto.getUserId()).or().eq(UserAuth::getEmail, registerDto.getEmail()));
+        long userCount = count(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, registerDto.userId()).or().eq(UserAuth::getEmail, registerDto.email()));
         if (userCount > 0) {
             throw new BusinessException(AuthErrorCode.USER_OR_EMAIL_EXISTS);
         } else {
             var newUserAuth = new UserAuth();
-            newUserAuth.setUserId(registerDto.getUserId());
-            newUserAuth.setEmail(registerDto.getEmail());
-            newUserAuth.setEncodedPassword(passwordEncoder.encode(registerDto.getRawPassword()));
+            newUserAuth.setUserId(registerDto.userId());
+            newUserAuth.setEmail(registerDto.email());
+            newUserAuth.setEncodedPassword(passwordEncoder.encode(registerDto.rawPassword()));
             newUserAuth.setVerified(false);
             String verificationCode = VerificationCodeUtil.buildNumericCode(6);
             newUserAuth.setVerificationCode(verificationCode);
             save(newUserAuth);
             emailService.sendEmail(newUserAuth.getEmail(), "inclove verification code", verificationCode);
-            return new RegisterResponseDto(newUserAuth.getEmail(), newUserAuth.getUserId());
+            String token = JwtUtil.generateToken(newUserAuth.getUserId());
+            return new RegisterResponseDto(token);
         }
     }
 
     @Override
-    public RegisterResponseDto resendRegisterEmail(RegisterDto registerDto) {
-        UserAuth userAuth = getOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, registerDto.getUserId()));
+    public void resendRegisterEmail(String userId) {
+        UserAuth userAuth = getOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, userId));
         if (Objects.nonNull(userAuth)) {
-            if (userAuth.getVerified()) {
+            if (Boolean.TRUE.equals(userAuth.getVerified())) {
                 throw new BusinessException(AuthErrorCode.USER_ALREADY_VERIFIED);
             } else {
                 emailService.sendEmail(userAuth.getEmail(), "inclove verification code", userAuth.getVerificationCode());
-                return new RegisterResponseDto(userAuth.getEmail(), userAuth.getUserId());
             }
         } else {
             throw new BusinessException(AuthErrorCode.USER_NOT_FOUND);
@@ -78,17 +77,16 @@ public class AuthServiceImpl extends ServiceImpl<UserAuthMapper, UserAuth> imple
     }
 
     @Override
-    public RegisterResponseDto verifyRegisterVerificationCode(VerificationCodeDto verificationCodeDto) {
-        UserAuth userAuth = getOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, verificationCodeDto.getUserId()));
+    public void verifyRegisterVerificationCode(VerificationCodeDto verificationCodeDto, String userId) {
+        UserAuth userAuth = getOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, userId));
         if (Objects.nonNull(userAuth)) {
-            if (userAuth.getVerified()) {
+            if (Boolean.TRUE.equals(userAuth.getVerified())) {
                 throw new BusinessException(AuthErrorCode.USER_ALREADY_VERIFIED);
             } else {
-                if (userAuth.getVerificationCode().equals(verificationCodeDto.getVerificationCode())) {
+                if (userAuth.getVerificationCode().equals(verificationCodeDto.verificationCode())) {
                     userAuth.setVerified(true);
                     userAuth.setVerificationCode(null);
                     updateById(userAuth);
-                    return new RegisterResponseDto(userAuth.getEmail(), userAuth.getUserId());
                 } else {
                     throw new BusinessException(AuthErrorCode.INVALID_VERIFICATION_CODE);
                 }
