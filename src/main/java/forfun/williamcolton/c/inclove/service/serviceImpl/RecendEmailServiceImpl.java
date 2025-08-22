@@ -3,7 +3,7 @@ package forfun.williamcolton.c.inclove.service.serviceImpl;
 import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
-import forfun.williamcolton.c.inclove.dto.email.EmailSendResponse;
+import forfun.williamcolton.c.inclove.dto.email.resp.EmailSendResponse;
 import forfun.williamcolton.c.inclove.exception.BusinessException;
 import forfun.williamcolton.c.inclove.service.EmailService;
 import org.springframework.beans.factory.annotation.Value;

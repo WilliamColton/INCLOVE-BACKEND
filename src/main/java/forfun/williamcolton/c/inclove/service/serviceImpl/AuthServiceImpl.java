@@ -2,8 +2,11 @@ package forfun.williamcolton.c.inclove.service.serviceImpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import forfun.williamcolton.c.inclove.dto.auth.*;
-import forfun.williamcolton.c.inclove.dto.email.EmailSendResponse;
+import forfun.williamcolton.c.inclove.dto.auth.req.LoginDto;
+import forfun.williamcolton.c.inclove.dto.auth.req.RegisterDto;
+import forfun.williamcolton.c.inclove.dto.auth.req.VerificationCodeDto;
+import forfun.williamcolton.c.inclove.dto.auth.resp.LoginResponseDto;
+import forfun.williamcolton.c.inclove.dto.auth.resp.RegisterResponseDto;
 import forfun.williamcolton.c.inclove.entity.UserAuth;
 import forfun.williamcolton.c.inclove.exception.BusinessException;
 import forfun.williamcolton.c.inclove.mapper.UserAuthMapper;

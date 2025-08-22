@@ -1,6 +1,5 @@
-package forfun.williamcolton.c.inclove.dto.email;
+package forfun.williamcolton.c.inclove.dto.email.resp;
 
-import lombok.Data;
 import lombok.Value;
 
 import java.time.LocalDateTime;
