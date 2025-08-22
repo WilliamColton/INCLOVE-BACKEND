@@ -1,6 +1,6 @@
 package forfun.williamcolton.c.inclove.service.serviceImpl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import forfun.williamcolton.c.inclove.dto.auth.req.LoginDto;
 import forfun.williamcolton.c.inclove.dto.auth.req.RegisterDto;
@@ -8,6 +8,7 @@ import forfun.williamcolton.c.inclove.dto.auth.req.VerificationCodeDto;
 import forfun.williamcolton.c.inclove.dto.auth.resp.LoginResponseDto;
 import forfun.williamcolton.c.inclove.dto.auth.resp.RegisterResponseDto;
 import forfun.williamcolton.c.inclove.entity.UserAuth;
+import forfun.williamcolton.c.inclove.exception.AuthErrorCode;
 import forfun.williamcolton.c.inclove.exception.BusinessException;
 import forfun.williamcolton.c.inclove.mapper.UserAuthMapper;
 import forfun.williamcolton.c.inclove.service.AuthService;
@@ -31,27 +32,22 @@ public class AuthServiceImpl extends ServiceImpl<UserAuthMapper, UserAuth> imple
     }
 
     public LoginResponseDto login(LoginDto loginDto) {
-        UserAuth userAuth = getOne(new QueryWrapper<UserAuth>().eq("user_id", loginDto.getUserId()));
-        if (Objects.nonNull(userAuth)) {
-            if (passwordEncoder.matches(loginDto.getRawPassword(), userAuth.getEncodedPassword())) {
-                if (!userAuth.getVerified()) {
-                    throw new BusinessException(2009, "this user has not been verified yet");
-                }
-                String token = JwtUtil.generateToken(userAuth.getUserId());
-                return new LoginResponseDto(token);
-            } else {
-                throw new BusinessException(1900, "wrong account or password");
-            }
-        } else {
-            throw new BusinessException(1900, "the user does not exist");
+        UserAuth userAuth = getOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, loginDto.getUserId()));
+        if (userAuth == null || !passwordEncoder.matches(loginDto.getRawPassword(), userAuth.getEncodedPassword())) {
+            throw new BusinessException(AuthErrorCode.WRONG_CREDENTIALS);
         }
+        if (!Boolean.TRUE.equals(userAuth.getVerified())) {
+            throw new BusinessException(AuthErrorCode.USER_NOT_VERIFIED);
+        }
+        String token = JwtUtil.generateToken(userAuth.getUserId());
+        return new LoginResponseDto(token);
     }
 
     @Override
     public RegisterResponseDto register(RegisterDto registerDto) {
-        long userCount = count(new QueryWrapper<UserAuth>().eq("user_id", registerDto.getUserId()).or().eq("email", registerDto.getEmail()));
+        long userCount = count(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, registerDto.getUserId()).or().eq(UserAuth::getEmail, registerDto.getEmail()));
         if (userCount > 0) {
-            throw new BusinessException(1901, "the user id or email already exists");
+            throw new BusinessException(AuthErrorCode.USER_OR_EMAIL_EXISTS);
         } else {
             var newUserAuth = new UserAuth();
             newUserAuth.setUserId(registerDto.getUserId());
@@ -60,44 +56,45 @@ public class AuthServiceImpl extends ServiceImpl<UserAuthMapper, UserAuth> imple
             newUserAuth.setVerified(false);
             String verificationCode = VerificationCodeUtil.buildNumericCode(6);
             newUserAuth.setVerificationCode(verificationCode);
-            emailService.sendEmail(newUserAuth.getEmail(), "inclove verification code", verificationCode);
             save(newUserAuth);
+            emailService.sendEmail(newUserAuth.getEmail(), "inclove verification code", verificationCode);
             return new RegisterResponseDto(newUserAuth.getEmail(), newUserAuth.getUserId());
         }
     }
 
     @Override
     public RegisterResponseDto resendRegisterEmail(RegisterDto registerDto) {
-        UserAuth userAuth = getOne(new QueryWrapper<UserAuth>().eq("user_id", registerDto.getUserId()));
+        UserAuth userAuth = getOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, registerDto.getUserId()));
         if (Objects.nonNull(userAuth)) {
             if (userAuth.getVerified()) {
-                throw new BusinessException(2006, "This user has been verified");
+                throw new BusinessException(AuthErrorCode.USER_ALREADY_VERIFIED);
             } else {
                 emailService.sendEmail(userAuth.getEmail(), "inclove verification code", userAuth.getVerificationCode());
                 return new RegisterResponseDto(userAuth.getEmail(), userAuth.getUserId());
             }
         } else {
-            throw new BusinessException(2007, "the user does not exist");
+            throw new BusinessException(AuthErrorCode.USER_NOT_FOUND);
         }
     }
 
     @Override
     public RegisterResponseDto verifyRegisterVerificationCode(VerificationCodeDto verificationCodeDto) {
-        UserAuth userAuth = getOne(new QueryWrapper<UserAuth>().eq("user_id", verificationCodeDto.getUserId()));
+        UserAuth userAuth = getOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, verificationCodeDto.getUserId()));
         if (Objects.nonNull(userAuth)) {
             if (userAuth.getVerified()) {
-                throw new BusinessException(2010, "this user has been verified");
+                throw new BusinessException(AuthErrorCode.USER_ALREADY_VERIFIED);
             } else {
                 if (userAuth.getVerificationCode().equals(verificationCodeDto.getVerificationCode())) {
                     userAuth.setVerified(true);
+                    userAuth.setVerificationCode(null);
                     updateById(userAuth);
                     return new RegisterResponseDto(userAuth.getEmail(), userAuth.getUserId());
-                }else {
-                    throw new BusinessException(2011,"Invalid verification code");
+                } else {
+                    throw new BusinessException(AuthErrorCode.INVALID_VERIFICATION_CODE);
                 }
             }
         } else {
-            throw new BusinessException(2007, "the user does not exist");
+            throw new BusinessException(AuthErrorCode.USER_NOT_FOUND);
         }
     }
 

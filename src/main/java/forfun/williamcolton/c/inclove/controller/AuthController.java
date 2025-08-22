@@ -7,7 +7,7 @@ import forfun.williamcolton.c.inclove.dto.auth.req.VerificationCodeDto;
 import forfun.williamcolton.c.inclove.dto.auth.resp.LoginResponseDto;
 import forfun.williamcolton.c.inclove.dto.auth.resp.RegisterResponseDto;
 import forfun.williamcolton.c.inclove.service.AuthService;
-import forfun.williamcolton.c.inclove.service.serviceImpl.GoogleAuthService;
+import forfun.williamcolton.c.inclove.service.serviceImpl.GoogleAuthServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final GoogleAuthService googleAuthService;
+    private final GoogleAuthServiceImpl googleAuthServiceImpl;
 
-    public AuthController(AuthService authService, GoogleAuthService googleAuthService) {
+    public AuthController(AuthService authService, GoogleAuthServiceImpl googleAuthServiceImpl) {
         this.authService = authService;
-        this.googleAuthService = googleAuthService;
+        this.googleAuthServiceImpl = googleAuthServiceImpl;
     }
 
     @PostMapping("/login")
@@ -31,7 +31,7 @@ public class AuthController {
 
     @PostMapping("/login/google")
     public LoginResponseDto googleLogin(@Valid @RequestBody GoogleLoginDto googleLoginDto) {
-        return googleAuthService.googleLogin(googleLoginDto);
+        return googleAuthServiceImpl.googleLogin(googleLoginDto);
     }
 
     @PostMapping("/register")
