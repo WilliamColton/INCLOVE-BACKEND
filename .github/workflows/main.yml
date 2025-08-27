@@ -36,7 +36,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository_owner | toLower }}/inclove:latest
+          tags: ghcr.io/${{ toLower(github.repository_owner) }}/inclove:latest
 
   deploy:
     needs: build-and-push
