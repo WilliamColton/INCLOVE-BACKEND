@@ -2,14 +2,17 @@ package forfun.williamcolton.c.inclove.entity;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 public class UserAuth {
 
-    Long id;
-    String email;
-    String userId;
-    String encodedPassword;
-    Boolean verified;
-    String verificationCode;    //use string to prevent loss of leading 0
+    private Long id;
+    private String email;
+    private String userId;
+    private String encodedPassword;
+    private Boolean verified;
+    private String verificationCode;    //use string to prevent loss of leading 0
+    private LocalDateTime createdAt;
 
 }

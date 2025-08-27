@@ -1,7 +1,6 @@
 package forfun.williamcolton.c.inclove.service.serviceImpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -17,7 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 
 @Service
-public class GoogleAuthServiceImpl extends ServiceImpl<UserAuthMapper, UserAuth> {
+public class GoogleAuthServiceImpl extends BaseServiceImpl<UserAuthMapper, UserAuth> {
 
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
 
@@ -29,7 +28,7 @@ public class GoogleAuthServiceImpl extends ServiceImpl<UserAuthMapper, UserAuth>
         GoogleIdToken idToken = null;
 
         try {
-            idToken = googleIdTokenVerifier.verify(googleLoginDto.getIdToken());
+            idToken = googleIdTokenVerifier.verify(googleLoginDto.idToken());
         } catch (Exception e) {
             throw new BusinessException(AuthErrorCode.GOOGLE_VERIFICATION_FAILED);
         }
@@ -46,12 +45,12 @@ public class GoogleAuthServiceImpl extends ServiceImpl<UserAuthMapper, UserAuth>
 
             UserAuth userAuth = getOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserId, userId));
             if (Objects.isNull(userAuth)) {
-                    var emailOwnerOpt = lambdaQuery().eq(UserAuth::getEmail, email).oneOpt();
-                    if (emailOwnerOpt.isPresent() && !userId.equals(emailOwnerOpt.get().getUserId())) {
-                        throw new BusinessException(AuthErrorCode.OAUTH_ACCOUNT_CONFLICT);
-                    }
+                var emailOwnerOpt = lambdaQuery().eq(UserAuth::getEmail, email).oneOpt();
+                if (emailOwnerOpt.isPresent() && !userId.equals(emailOwnerOpt.get().getUserId())) {
+                    throw new BusinessException(AuthErrorCode.OAUTH_ACCOUNT_CONFLICT);
+                }
 
-                    var newUserAuth = new UserAuth();
+                var newUserAuth = new UserAuth();
                 newUserAuth.setVerified(true);
                 newUserAuth.setUserId(userId);
                 newUserAuth.setEmail(payload.getEmail());
