@@ -2,10 +2,36 @@ spring:
   application:
     name: INCLOVE
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${DATABASE_NAME}?useUnicode=true&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${DATABASE_NAME}?createDatabaseIfNotExist=true&useUnicode=true&useSSL=false&allowPublicKeyRetrieval=true
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    baseline-version: 0
+    locations: classpath:db/migration
+    default-schema: inclove
+    create-schemas: true
+
+  sql:
+    init:
+      mode: never
+
+logging:
+  file:
+    name: ./app.log     # Windows 开发可用 D:/logs/app.log
+  logback:
+    rollingPolicy:
+      max-file-size: 50MB              # 单文件上限
+      max-history: 14                  # 保留 14 天的历史文件
+      total-size-cap: 2GB              # 历史文件总体积上限
+      clean-history-on-start: true
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+  level:
+    org.zalando.logbook: TRACE
+
 
 resend:
   api-key: ${RESEND_API_KEY}
@@ -13,3 +39,20 @@ resend:
 
 google:
   client-id: ${GOOGLE_CLIENT_ID}
+
+embeddings:
+  apiKey: ${EMBEDDINGS_API_KEY}
+  baseUrl: ${EMBEDDINGS_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+  model: ${EMBEDDINGS_MODEL:text-embedding-v4}
+  vectorDimension: ${EMBEDDINGS_VECTOR_DIMENSION:1024}
+
+milvus:
+  dbName: ${MILVUS_DBNAME}
+  uri: ${MILVUS_URI}
+  token: ${MILVUS_TOKEN:root:Milvus}
+  profileCollectionName: ${MILVUS_PROFILE_COLLECTION_NAME}
+  queryCollectionName: ${MILVUS_QUERY_COLLECTION_NAME}
+
+logbook:
+  minimum-status: 0
+

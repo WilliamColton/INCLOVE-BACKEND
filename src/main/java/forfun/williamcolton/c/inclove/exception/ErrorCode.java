@@ -1,11 +1,11 @@
 package forfun.williamcolton.c.inclove.exception;
 
-import org.springframework.http.HttpStatus;
+import java.io.Serializable;
 
-public interface ErrorCode {
+public interface ErrorCode extends Serializable {
 
     Integer getCode();
+
     String getMessage();
-    HttpStatus getHttpStatus();
 
 }
