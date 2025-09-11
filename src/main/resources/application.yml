@@ -13,7 +13,6 @@ spring:
     locations: classpath:db/migration
     default-schema: inclove
     create-schemas: true
-
   sql:
     init:
       mode: never
@@ -31,6 +30,7 @@ logging:
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
   level:
     org.zalando.logbook: TRACE
+    org.springframework.security: DEBUG
 
 
 resend:
@@ -55,4 +55,8 @@ milvus:
 
 logbook:
   minimum-status: 0
+  filter:
+    enabled: false
+  secure-filter:
+    enabled: false
 
