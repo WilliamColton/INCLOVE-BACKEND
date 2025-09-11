@@ -15,7 +15,6 @@ public class GlobalResponseAdvice implements ResponseBodyAdvice<Object> {
     public boolean supports(MethodParameter returnType,
                             @NotNull Class<? extends HttpMessageConverter<?>> converterType) {
         Class<?> ret = returnType.getParameterType();
-
         if (GlobalApiResponse.class.isAssignableFrom(ret)) return false;
         if (ResponseEntity.class.isAssignableFrom(ret)) return false;
         return !CharSequence.class.isAssignableFrom(ret);

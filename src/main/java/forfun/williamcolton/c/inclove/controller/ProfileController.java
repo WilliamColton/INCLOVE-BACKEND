@@ -1,6 +1,7 @@
 package forfun.williamcolton.c.inclove.controller;
 
 import forfun.williamcolton.c.inclove.dto.profile.req.CreateProfileDto;
+import forfun.williamcolton.c.inclove.dto.profile.resp.GetUserIdDto;
 import forfun.williamcolton.c.inclove.entity.UserProfile;
 import forfun.williamcolton.c.inclove.service.MatchService;
 import forfun.williamcolton.c.inclove.service.ProfileService;
@@ -32,10 +33,10 @@ public class ProfileController {
         String userId = (String) authentication.getPrincipal();
         return matchService.match(userId);
     }
-    
+
     @GetMapping("/me")
-    public String getCurrentUserId(Authentication authentication) {
-        return (String) authentication.getPrincipal();
+    public GetUserIdDto getCurrentUserId(Authentication authentication) {
+        return new GetUserIdDto((String) authentication.getPrincipal());
     }
 
 }
