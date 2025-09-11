@@ -1,11 +1,10 @@
 package forfun.williamcolton.c.inclove.controller;
 
 import forfun.williamcolton.c.inclove.dto.chat.req.SendMessageDto;
-import forfun.williamcolton.c.inclove.service.MessageService;
+import forfun.williamcolton.c.inclove.dto.chat.resp.AckDto;
+import forfun.williamcolton.c.inclove.service.ChatWsService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -14,16 +13,23 @@ import java.security.Principal;
 @RequiredArgsConstructor
 public class ChatWsController {
 
-    private final SimpMessagingTemplate template;
-    private final MessageService messageService;
+    public final ChatWsService chatWsService;
 
     @MessageMapping("/chat.send")
-    public void send(SendMessageDto sendMessageDto, Principal p) {
-        try {
-            template.convertAndSendToUser(p.getName(), "/queue/conversations", sendMessageDto);
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
-        }
-        messageService.saveMessage();
+    public void send(SendMessageDto sendMessageDto) {
+        chatWsService.send(sendMessageDto);
     }
+
+    @MessageMapping("/chat.ack")
+    public void ack(AckDto ackDto, Principal p) {
+        chatWsService.ack(ackDto, p.getName());
+    }
+
+    @MessageMapping("/user.heartbeat")
+    public void doHeartbeat(Principal p) {
+        if (p != null) {
+            chatWsService.doHeartbeat(p.getName());
+        }
+    }
+
 }

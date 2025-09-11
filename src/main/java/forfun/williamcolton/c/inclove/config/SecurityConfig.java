@@ -3,12 +3,8 @@ package forfun.williamcolton.c.inclove.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import forfun.williamcolton.c.inclove.filter.JwtAuthFilter;
 import forfun.williamcolton.c.inclove.global.GlobalApiResponse;
-import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -38,25 +34,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder(12);
     }
 
-
-    @Bean
-    public ApplicationRunner debugFilters(ApplicationContext ctx) {
-        return args -> {
-            System.out.println("=== All Filters in Spring Context ===");
-            ctx.getBeansOfType(Filter.class).forEach((name, filter) -> {
-                System.out.printf("bean=%s, class=%s%n", name, filter.getClass().getName());
-            });
-
-            System.out.println("=== All FilterRegistrationBeans (with order) ===");
-            ctx.getBeansOfType(FilterRegistrationBean.class).forEach((name, frb) -> {
-                System.out.printf("reg=%s, filter=%s, order=%d%n",
-                        name,
-                        frb.getFilter().getClass().getName(),
-                        frb.getOrder());
-            });
-        };
-    }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
@@ -64,6 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthFilter(),
