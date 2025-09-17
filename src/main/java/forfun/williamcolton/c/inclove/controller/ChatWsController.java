@@ -16,8 +16,8 @@ public class ChatWsController {
     public final ChatWsService chatWsService;
 
     @MessageMapping("/chat.send")
-    public void send(SendMessageDto sendMessageDto) {
-        chatWsService.send(sendMessageDto);
+    public void send(SendMessageDto sendMessageDto, Principal p) {
+        chatWsService.send(sendMessageDto, p.getName());
     }
 
     @MessageMapping("/chat.ack")

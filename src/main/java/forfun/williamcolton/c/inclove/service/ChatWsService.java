@@ -5,7 +5,7 @@ import forfun.williamcolton.c.inclove.dto.chat.resp.AckDto;
 
 public interface ChatWsService {
 
-    void send(SendMessageDto sendMessageDto);
+    void send(SendMessageDto sendMessageDto, String userId);
 
     void doHeartbeat(String userId);
 

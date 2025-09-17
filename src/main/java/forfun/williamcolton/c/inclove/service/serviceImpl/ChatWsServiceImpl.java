@@ -35,9 +35,11 @@ public class ChatWsServiceImpl implements ChatWsService {
     private final StringRedisTemplate redisTemplate;
 
     @Override
-    public void send(SendMessageDto sendMessageDto) {
+    public void send(SendMessageDto sendMessageDto, String userId) {
         messageService.saveMessage();
         String sid = SIDSnowflakeBuilder.getNextSID();
+
+        // 在线就走正常的流程
         if (isTheUserOnline(userStatusCache, sendMessageDto.recipientId())) {
             long nextCheckAt = System.currentTimeMillis() + 1000;
             redisTemplate.opsForZSet().add("ack_pending_list", sid, nextCheckAt);
@@ -45,9 +47,20 @@ public class ChatWsServiceImpl implements ChatWsService {
             redisTemplate.opsForHash().putAll("pending:" + sid, value);
             redisTemplate.expire("pending:" + sid, 10, TimeUnit.MINUTES);
             simpMessagingTemplate.convertAndSendToUser(sendMessageDto.recipientId(), "/queue/conversations", new ReturnMessageDto(sid, sendMessageDto.content(), sendMessageDto.recipientId()));
+        } else {
+            // 不在线就伪造一个ack包好咯
+            simpMessagingTemplate.convertAndSendToUser(userId, "/queue/conversations", new ReturnAckDto(sid, sendMessageDto.conversationId()));
         }
+
     }
 
+    // 根据服务端无状态的设计原则，该部分本来应该放到客户端
+    // 但是鉴于压力全部给到客户端之后，服务端干的事情就太少了（主要是我不喜欢写客户端）
+    // 因此该重试过程放到服务端执行
+    // 此处引用一段参考文章：http://www.52im.net/thread-294-1-1.html
+    // 1）上述设计理念，由客户端重传，可以保证服务端无状态性（架构设计基本准则）；
+    // 2）如果client-B不在线，im-server保存了离线消息后，要伪造ack:N发送给client-A；
+    // 3）离线消息的拉取，为了保证消息的可靠性，也需要有ack机制，但由于拉取离线消息不存在N报文，故实际情况要简单的多，即先发送offline:R报文拉取消息，收到offline:A后，再发送offlineack:R删除离线消息。
     @Scheduled(cron = "0/5 * * * * *")
     private void checkAckQueue() {
         var ackPendingList = redisTemplate.boundZSetOps("ack_pending_list");
