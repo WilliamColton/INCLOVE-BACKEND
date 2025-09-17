@@ -3,14 +3,17 @@ package forfun.williamcolton.c.inclove.service.serviceImpl;
 import com.alicp.jetcache.Cache;
 import forfun.williamcolton.c.inclove.component.SIDSnowflakeBuilder;
 import forfun.williamcolton.c.inclove.dto.chat.req.SendMessageDto;
+import forfun.williamcolton.c.inclove.dto.chat.req.UserStatusDto;
 import forfun.williamcolton.c.inclove.dto.chat.resp.AckDto;
 import forfun.williamcolton.c.inclove.dto.chat.resp.ReturnAckDto;
 import forfun.williamcolton.c.inclove.dto.chat.resp.ReturnMessageDto;
+import forfun.williamcolton.c.inclove.entity.Message;
 import forfun.williamcolton.c.inclove.model.chat.UserStatus;
 import forfun.williamcolton.c.inclove.service.ChatWsService;
 import forfun.williamcolton.c.inclove.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -33,11 +36,16 @@ public class ChatWsServiceImpl implements ChatWsService {
     private final MessageService messageService;
     private final Cache<String, UserStatus> userStatusCache;
     private final StringRedisTemplate redisTemplate;
+    private final ModelMapper modelMapper;
 
     @Override
     public void send(SendMessageDto sendMessageDto, String userId) {
-        messageService.saveMessage();
         String sid = SIDSnowflakeBuilder.getNextSID();
+
+        Message message = modelMapper.map(sendMessageDto, Message.class);
+        message.setMessageId(sid);
+        message.setSenderId(userId);
+        messageService.saveMessage(message);
 
         // 在线就走正常的流程
         if (isTheUserOnline(userStatusCache, sendMessageDto.recipientId())) {
@@ -110,8 +118,9 @@ public class ChatWsServiceImpl implements ChatWsService {
     }
 
     @Override
-    public void doHeartbeat(String userId) {
-        userStatusCache.put(userId, new UserStatus(true, LocalDateTime.now()), cacheExpirationTimeAfterLosingHeartbeat, TimeUnit.SECONDS);
+    public void doHeartbeat(UserStatusDto userStatusDto, String userId) {
+        userStatusCache.put(userId, new UserStatus(true, userStatusDto.getIsTyping(), LocalDateTime.now()), cacheExpirationTimeAfterLosingHeartbeat, TimeUnit.SECONDS);
+        simpMessagingTemplate.convertAndSendToUser(userStatusDto.getPeerId(), "/queue/conversations", userStatusDto);
     }
 
     @Override

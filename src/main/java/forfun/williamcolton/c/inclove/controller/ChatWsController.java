@@ -1,6 +1,7 @@
 package forfun.williamcolton.c.inclove.controller;
 
 import forfun.williamcolton.c.inclove.dto.chat.req.SendMessageDto;
+import forfun.williamcolton.c.inclove.dto.chat.req.UserStatusDto;
 import forfun.williamcolton.c.inclove.dto.chat.resp.AckDto;
 import forfun.williamcolton.c.inclove.service.ChatWsService;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,9 @@ public class ChatWsController {
     }
 
     @MessageMapping("/user.heartbeat")
-    public void doHeartbeat(Principal p) {
+    public void doHeartbeat(UserStatusDto userStatusDto, Principal p) {
         if (p != null) {
-            chatWsService.doHeartbeat(p.getName());
+            chatWsService.doHeartbeat(userStatusDto, p.getName());
         }
     }
 

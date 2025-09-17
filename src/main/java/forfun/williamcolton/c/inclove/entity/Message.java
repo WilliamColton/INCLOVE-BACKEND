@@ -7,13 +7,11 @@ import java.time.LocalDateTime;
 @Data
 public class Message {
 
-    private Long messageId;
+    private String messageId;
     private String content;
     private Long conversationId;
-    private Long senderId;
+    private String senderId;
+    private String recipientId;
     private LocalDateTime createdAt;
-    private Status status;
-
-    public enum Status {SENT, DELIVERED, READ}
 
 }

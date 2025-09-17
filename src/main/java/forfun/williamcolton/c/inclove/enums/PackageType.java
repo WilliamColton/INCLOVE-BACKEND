@@ -3,6 +3,7 @@ package forfun.williamcolton.c.inclove.enums;
 public enum PackageType {
 
     ACK,
-    MESSAGE
-    
+    MESSAGE,
+    USER_STATUS
+
 }
