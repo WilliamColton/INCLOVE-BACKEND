@@ -7,7 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class ConversationRespDto {
 
-    String conversationId;
+    String id;
     String firstUserId;
     String SecondUserId;
 

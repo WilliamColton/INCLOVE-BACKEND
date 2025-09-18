@@ -9,7 +9,7 @@ public class Message {
 
     private String messageId;
     private String content;
-    private Long conversationId;
+    private String conversationId;
     private String senderId;
     private String recipientId;
     private LocalDateTime createdAt;

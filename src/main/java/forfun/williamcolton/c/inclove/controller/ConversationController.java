@@ -4,10 +4,9 @@ import forfun.williamcolton.c.inclove.dto.conversation.ConversationRespDto;
 import forfun.williamcolton.c.inclove.service.ConversationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/conversation")
@@ -23,7 +22,12 @@ public class ConversationController {
         conversationService.openConversation(userId, peerUserId);
     }
 
-    @PostMapping
+    @GetMapping
+    public ConversationRespDto findConversationByUserIdOrPeerUserId(@RequestParam String peerUserId, Principal p) {
+        return conversationService.finaConversationByUserIdOrPeerUserId(peerUserId, p.getName());
+    }
+
+    @GetMapping
     public ConversationRespDto findConversationById(@RequestParam String conversationId) {
         return conversationService.findConversationById(conversationId);
     }
