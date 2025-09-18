@@ -1,0 +1,11 @@
+# Maven build output
+/target/
+
+# Node/Vite artifacts
+frontend/node_modules/
+frontend/dist/
+
+# General ignore
+.DS_Store
+.idea/
+*.log
