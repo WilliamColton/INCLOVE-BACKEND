@@ -28,7 +28,7 @@ public class WcEventListener {
         }
         String userId = event.getUser().getName();
         log.info("用户ID: " + userId + " 已登录");
-        userStatusCache.put(userId, new UserStatus(true, LocalDateTime.now()), cacheExpirationTimeAfterLosingHeartbeat, TimeUnit.SECONDS);
+        userStatusCache.put(userId, new UserStatus(true, false, LocalDateTime.now()), cacheExpirationTimeAfterLosingHeartbeat, TimeUnit.SECONDS);
     }
 
     @EventListener
@@ -38,7 +38,7 @@ public class WcEventListener {
         }
         String userId = event.getUser().getName();
         log.info("用户ID: " + userId + " 已下线");
-        userStatusCache.put(userId, new UserStatus(false, LocalDateTime.now()), cacheExpirationTimeAfterLosingHeartbeat, TimeUnit.SECONDS);
+        userStatusCache.put(userId, new UserStatus(false, false, LocalDateTime.now()), cacheExpirationTimeAfterLosingHeartbeat, TimeUnit.SECONDS);
     }
 
 }
