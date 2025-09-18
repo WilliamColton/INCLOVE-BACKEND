@@ -7,7 +7,7 @@ public interface ConversationService extends IBaseService<Conversation> {
 
     ConversationRespDto findConversationById(String conversationId);
 
-    ConversationRespDto finaConversationByUserIdOrPeerUserId(String peerUserId, String userId);
+    ConversationRespDto finaConversationByUserIdAndPeerUserId(String peerUserId, String userId);
 
     void openConversation(String userId, String peerUserId);
 

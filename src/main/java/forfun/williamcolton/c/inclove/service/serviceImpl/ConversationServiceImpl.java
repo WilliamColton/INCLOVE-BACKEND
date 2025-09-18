@@ -24,13 +24,13 @@ public class ConversationServiceImpl extends BaseServiceImpl<ConversationMapper,
     }
 
     @Override
-    public ConversationRespDto finaConversationByUserIdOrPeerUserId(String peerUserId, String userId) {
+    public ConversationRespDto finaConversationByUserIdAndPeerUserId(String peerUserId, String userId) {
         Conversation conversation = null;
         int difference = userId.compareTo(peerUserId);
         if (difference < 0) {
-            conversation = getOne(new LambdaQueryWrapper<Conversation>().eq(Conversation::getFirstUserId, userId));
+            conversation = getOne(new LambdaQueryWrapper<Conversation>().eq(Conversation::getFirstUserId, userId).eq(Conversation::getSecondUserId, peerUserId));
         } else if (difference > 0) {
-            conversation = getOne(new LambdaQueryWrapper<Conversation>().eq(Conversation::getFirstUserId, peerUserId));
+            conversation = getOne(new LambdaQueryWrapper<Conversation>().eq(Conversation::getFirstUserId, peerUserId).eq(Conversation::getSecondUserId, userId));
         } else {
             throw new RuntimeException("八嘎，两个用户id一样");
         }
@@ -42,11 +42,11 @@ public class ConversationServiceImpl extends BaseServiceImpl<ConversationMapper,
         Conversation conversation = null;
         int difference = userId.compareTo(peerUserId);
         if (difference < 0) {
-            if (getOne(new LambdaQueryWrapper<Conversation>().eq(Conversation::getFirstUserId, userId)) == null) {
+            if (getOne(new LambdaQueryWrapper<Conversation>().eq(Conversation::getFirstUserId, userId).eq(Conversation::getSecondUserId, peerUserId)) == null) {
                 conversation = new Conversation(userId, peerUserId);
             }
         } else if (difference > 0) {
-            if (getOne(new LambdaQueryWrapper<Conversation>().eq(Conversation::getFirstUserId, peerUserId)) == null) {
+            if (getOne(new LambdaQueryWrapper<Conversation>().eq(Conversation::getFirstUserId, peerUserId).eq(Conversation::getSecondUserId, userId)) == null) {
                 conversation = new Conversation(peerUserId, userId);
             }
         } else {

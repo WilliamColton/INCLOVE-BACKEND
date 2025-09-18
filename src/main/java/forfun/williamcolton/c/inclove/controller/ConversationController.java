@@ -22,12 +22,12 @@ public class ConversationController {
         conversationService.openConversation(userId, peerUserId);
     }
 
-    @GetMapping
-    public ConversationRespDto findConversationByUserIdOrPeerUserId(@RequestParam String peerUserId, Principal p) {
-        return conversationService.finaConversationByUserIdOrPeerUserId(peerUserId, p.getName());
+    @GetMapping("/userIdAndPeerUserId")
+    public ConversationRespDto findConversationByUserIdAndPeerUserId(@RequestParam String peerUserId, Principal p) {
+        return conversationService.finaConversationByUserIdAndPeerUserId(peerUserId, p.getName());
     }
 
-    @GetMapping
+    @GetMapping("/id")
     public ConversationRespDto findConversationById(@RequestParam String conversationId) {
         return conversationService.findConversationById(conversationId);
     }

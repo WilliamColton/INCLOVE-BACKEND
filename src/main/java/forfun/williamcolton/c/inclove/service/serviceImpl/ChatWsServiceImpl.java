@@ -51,10 +51,10 @@ public class ChatWsServiceImpl implements ChatWsService {
         if (isTheUserOnline(userStatusCache, sendMessageDto.recipientId())) {
             long nextCheckAt = System.currentTimeMillis() + 1000;
             redisTemplate.opsForZSet().add("ack_pending_list", sid, nextCheckAt);
-            Map<String, String> value = Map.of("userId", String.valueOf(sendMessageDto.recipientId()), "content", sendMessageDto.content(), "retry", String.valueOf(0), "nextCheckAt", String.valueOf(nextCheckAt));
+            Map<String, String> value = Map.of("userId", String.valueOf(userId), "peerUserId", sendMessageDto.recipientId(), "conversationId", sendMessageDto.conversationId(), "content", sendMessageDto.content(), "retry", String.valueOf(0), "nextCheckAt", String.valueOf(nextCheckAt));
             redisTemplate.opsForHash().putAll("pending:" + sid, value);
             redisTemplate.expire("pending:" + sid, 10, TimeUnit.MINUTES);
-            simpMessagingTemplate.convertAndSendToUser(sendMessageDto.recipientId(), "/queue/conversations", new ReturnMessageDto(sid, sendMessageDto.content(), sendMessageDto.recipientId()));
+            simpMessagingTemplate.convertAndSendToUser(sendMessageDto.recipientId(), "/queue/conversations", new ReturnMessageDto(sid, sendMessageDto.content(), sendMessageDto.recipientId(), userId, sendMessageDto.conversationId()));
         } else {
             // 不在线就伪造一个ack包好咯
             simpMessagingTemplate.convertAndSendToUser(userId, "/queue/conversations", new ReturnAckDto(sid, sendMessageDto.conversationId()));
@@ -87,23 +87,25 @@ public class ChatWsServiceImpl implements ChatWsService {
             }
 
             String key = "pending:" + sid;
-            var penging = redisTemplate.boundHashOps(key).entries();
-            if (penging == null || penging.isEmpty()) {
+            var pending = redisTemplate.boundHashOps(key).entries();
+            if (pending == null || pending.isEmpty()) {
                 continue;
             }
 
-            var userId = String.valueOf(penging.get("userId"));
-            var content = String.valueOf(penging.get("content"));
-            simpMessagingTemplate.convertAndSendToUser(userId, "/queue/conversations", new ReturnMessageDto(sid, content, userId));
+            var userId = String.valueOf(pending.get("userId"));
+            var content = String.valueOf(pending.get("content"));
+            var peerUserId = String.valueOf(pending.get("peerUserId"));
+            var conversationId = String.valueOf(pending.get("conversationId"));
+            simpMessagingTemplate.convertAndSendToUser(peerUserId, "/queue/conversations", new ReturnMessageDto(sid, content, userId, userId, conversationId));
 
-            var retry = Integer.valueOf((String) penging.get("retry"));
+            var retry = Integer.valueOf((String) pending.get("retry"));
             if (retry + 1 > maxRetry) {
                 // redisTemplate.opsForHash().delete(key);
                 // 这是删除了单个哈希键呜呜呜
                 redisTemplate.delete(key);
                 log.warn("sid: " + sid + " ack failed");
             } else {
-                var nextCheckAt = Long.parseLong((String) penging.get("nextCheckAt")) + 1000L;
+                var nextCheckAt = Long.parseLong((String) pending.get("nextCheckAt")) + 1000L;
                 retry += 1;
                 redisTemplate.opsForHash().put(key, "retry", String.valueOf(retry));
                 redisTemplate.opsForHash().put(key, "nextCheckAt", String.valueOf(nextCheckAt));
