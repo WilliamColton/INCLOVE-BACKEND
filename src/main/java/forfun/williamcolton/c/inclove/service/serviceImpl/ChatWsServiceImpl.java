@@ -96,7 +96,7 @@ public class ChatWsServiceImpl implements ChatWsService {
             var content = String.valueOf(pending.get("content"));
             var peerUserId = String.valueOf(pending.get("peerUserId"));
             var conversationId = String.valueOf(pending.get("conversationId"));
-            simpMessagingTemplate.convertAndSendToUser(peerUserId, "/queue/conversations", new ReturnMessageDto(sid, content, userId, userId, conversationId));
+            simpMessagingTemplate.convertAndSendToUser(peerUserId, "/queue/conversations", new ReturnMessageDto(sid, content, userId, peerUserId, conversationId));
 
             var retry = Integer.valueOf((String) pending.get("retry"));
             if (retry + 1 > maxRetry) {
