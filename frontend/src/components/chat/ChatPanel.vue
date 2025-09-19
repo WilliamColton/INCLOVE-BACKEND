@@ -89,14 +89,25 @@ const connecting = ref(false);
 const sendLoading = ref(false);
 const conversationLoading = ref(false);
 const connectionStatus = ref('disconnected');
+let heartbeatTimer;
+const HEARTBEAT_INTERVAL_MS = 5000;
 let localMessageCounter = 0;
 
 const wsUrl = import.meta.env.VITE_WS_BASE_URL || 'http://localhost:8080/ws';
 
-const canSend = computed(() => Boolean(stompClient.value && conversationId.value && peerUserId.value));
+const canSend = computed(
+  () => Boolean(stompClient.value && connectionStatus.value === 'connected' && peerUserId.value)
+);
 
 const pushStatus = (message) => {
   statusLog.push({ id: `${Date.now()}-${statusLog.length}`, message, timestamp: new Date().toLocaleString() });
+};
+
+const stopHeartbeatTimer = () => {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = undefined;
+  }
 };
 
 const initializeConversation = async () => {
@@ -157,22 +168,27 @@ const connect = () => {
       }
     });
     pushStatus('Connected to chat server');
+    sendHeartbeat();
+    startHeartbeatTimer();
   };
 
   client.onDisconnect = () => {
     connectionStatus.value = 'disconnected';
+    stopHeartbeatTimer();
     pushStatus('Disconnected from chat server');
   };
 
   client.onStompError = (frame) => {
     connecting.value = false;
     connectionStatus.value = 'error';
+    stopHeartbeatTimer();
     pushStatus(`Broker error: ${frame?.headers['message'] || ''}`);
   };
 
   client.onWebSocketError = (event) => {
     connecting.value = false;
     connectionStatus.value = 'error';
+    stopHeartbeatTimer();
     pushStatus(`WebSocket error: ${event?.type || 'unknown'}`);
   };
 
@@ -181,6 +197,7 @@ const connect = () => {
 };
 
 const disconnect = () => {
+  stopHeartbeatTimer();
   if (subscription.value) {
     subscription.value.unsubscribe();
     subscription.value = undefined;
@@ -228,6 +245,10 @@ const handleIncoming = (payload) => {
 
 const sendMessage = async () => {
   if (!canSend.value) {
+    return;
+  }
+  if (!conversationId.value) {
+    ElMessage.warning('Open conversation first');
     return;
   }
   if (!messageContent.value.trim()) {
@@ -286,9 +307,11 @@ const sendAck = (message) => {
   });
 };
 
-const sendHeartbeat = () => {
-  if (!canSend.value || !stompClient.value || !stompClient.value.connected) {
-    ElMessage.warning('Connect before sending heartbeat');
+const sendHeartbeat = ({ silent = false } = {}) => {
+  if (!stompClient.value || !stompClient.value.connected || !peerUserId.value) {
+    if (!silent) {
+      ElMessage.warning('Connect before sending heartbeat');
+    }
     return;
   }
   const now = new Date().toISOString().slice(0, 19);
@@ -301,7 +324,16 @@ const sendHeartbeat = () => {
       peerId: peerUserId.value
     })
   });
-  pushStatus('Heartbeat sent');
+  if (!silent) {
+    pushStatus('Heartbeat sent');
+  }
+};
+
+const startHeartbeatTimer = () => {
+  stopHeartbeatTimer();
+  heartbeatTimer = setInterval(() => {
+    sendHeartbeat({ silent: true });
+  }, HEARTBEAT_INTERVAL_MS);
 };
 
 onBeforeUnmount(() => {
