@@ -54,7 +54,12 @@ public class MilvusConfig {
     public MilvusClientV2 buildMilvusClient() {
         ConnectConfig connectConfig = ConnectConfig.builder().uri(uri).token(token).build();
 
-        MilvusClientV2 client = new MilvusClientV2(connectConfig);
+        MilvusClientV2 client;
+        try {
+            client = new MilvusClientV2(connectConfig);
+        } catch (Exception e) {
+            throw new RuntimeException("MilvusClientV2 连接失败", e);
+        }
 
         // check if there is a corresponding database
         List<String> dbNames = client.listDatabases().getDatabaseNames();

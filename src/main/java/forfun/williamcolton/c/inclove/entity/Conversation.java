@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 @RequiredArgsConstructor
 public class Conversation {
 
-    String id;
+    private String id;
     @NotNull
-    String firstUserId;
+    private String firstUserId;
     @NotNull
-    String SecondUserId;
+    private String secondUserId;
 
 }
