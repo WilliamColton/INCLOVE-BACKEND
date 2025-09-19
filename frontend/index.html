@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>INCLOVE 双人聊天演示</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+    }
+    body {
+      margin: 0;
+      background: #f5f7fa;
+    }
+    #app {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    header {
+      font-size: 1.9rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: #111827;
+    }
+    section {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 1.2rem;
+      color: #111827;
+    }
+    p {
+      margin: 0 0 10px;
+      color: #4b5563;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: #374151;
+      font-weight: 600;
+    }
+    input, textarea {
+      padding: 10px 12px;
+      border-radius: 9px;
+      border: 1px solid #cbd5f5;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    input:focus, textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    button {
+      align-self: flex-start;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+    }
+    button[disabled] {
+      background: #9aa5f7;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+    .grid-two {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+    .grid-auth {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+    form {
+      display: grid;
+      gap: 12px;
+    }
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      color: #374151;
+    }
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #d1d5db;
+      box-shadow: none;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+    .status-dot.online {
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+    }
+    .messages {
+      max-height: 380px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 6px;
+    }
+    .message {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .message.self {
+      align-items: flex-end;
+    }
+    .message.peer {
+      align-items: flex-start;
+    }
+    .meta {
+      font-size: 0.78rem;
+      color: #6b7280;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .bubble {
+      max-width: 74%;
+      padding: 10px 14px;
+      border-radius: 15px;
+      line-height: 1.48;
+      word-break: break-word;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+    }
+    .message.self .bubble {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .message.peer .bubble {
+      background: #e5e7eb;
+      color: #111827;
+      border-bottom-left-radius: 4px;
+    }
+    .ack {
+      font-size: 0.75rem;
+      color: #15803d;
+    }
+    .ack.pending {
+      color: #f97316;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+    .chat-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .logs ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      color: #4b5563;
+    }
+    .logs li {
+      padding: 4px 0;
+      border-bottom: 1px dashed #e5e7eb;
+    }
+    .logs li:last-child {
+      border-bottom: none;
+    }
+    .inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+    }
+    .hint {
+      font-size: 0.84rem;
+      color: #6b7280;
+    }
+    .presence {
+      font-size: 0.9rem;
+      color: #2563eb;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>INCLOVE 双人聊天演示（纯 JavaScript 版本）</header>
+
+    <section id="settings-section">
+      <h2>服务端设置</h2>
+      <div class="grid-two">
+        <label>
+          REST API 地址
+          <input id="rest-base" type="text" placeholder="http://localhost:8080" />
+        </label>
+        <label>
+          WebSocket 基址（可选）
+          <input id="ws-base" type="text" placeholder="留空则沿用 REST 地址" />
+        </label>
+      </div>
+      <p class="hint" id="endpoint-preview"></p>
+      <button id="reconnect-btn" type="button">重新连接 WebSocket</button>
+    </section>
+
+    <section id="auth-section" class="grid-auth">
+      <div>
+        <h2>注册</h2>
+        <p>使用邮箱、用户 ID、密码创建新账号，成功后自动完成登录。</p>
+        <form id="register-form">
+          <label>
+            邮箱
+            <input id="register-email" type="email" placeholder="demo@example.com" required />
+          </label>
+          <label>
+            用户 ID
+            <input id="register-user" type="text" placeholder="例如：10001" required />
+          </label>
+          <label>
+            密码
+            <input id="register-password" type="password" placeholder="至少 6 位" required />
+          </label>
+          <button type="submit">注册并登录</button>
+        </form>
+      </div>
+      <div>
+        <h2>登录</h2>
+        <p>已注册用户直接登录，系统会保存 JWT 并自动尝试连接 WebSocket。</p>
+        <form id="login-form">
+          <label>
+            邮箱
+            <input id="login-email" type="email" placeholder="demo@example.com" required />
+          </label>
+          <label>
+            用户 ID
+            <input id="login-user" type="text" placeholder="与注册一致" required />
+          </label>
+          <label>
+            密码
+            <input id="login-password" type="password" required />
+          </label>
+          <button type="submit">登录</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="account-section" class="hidden">
+      <h2>账号与连接</h2>
+      <div class="inline">
+        <div class="status-line">
+          <span id="status-dot" class="status-dot"></span>
+          <span id="connection-status">未连接</span>
+        </div>
+        <div>当前用户：<strong id="current-user">-</strong></div>
+        <button id="logout-btn" type="button">退出登录</button>
+      </div>
+    </section>
+
+    <section id="conversation-section" class="hidden">
+      <h2>建立会话</h2>
+      <p>输入对方用户 ID，后端会自动创建或返回对应的对话 ID。</p>
+      <div class="inline">
+        <label>
+          对方用户 ID
+          <input id="peer-id" type="text" placeholder="例如：10002" />
+        </label>
+        <button id="open-conversation" type="button">开启 / 进入会话</button>
+      </div>
+      <p class="hint" id="conversation-info"></p>
+      <div id="peer-presence" class="presence hidden"></div>
+    </section>
+
+    <section id="chat-section" class="hidden">
+      <h2>聊天窗口</h2>
+      <div id="messages" class="messages"></div>
+      <div class="chat-controls">
+        <label>
+          输入消息（Enter 发送，Shift + Enter 换行）
+          <textarea id="message-input" placeholder="说点什么吧…"></textarea>
+        </label>
+        <button id="send-btn" type="button">发送消息</button>
+      </div>
+    </section>
+
+    <section class="logs">
+      <h2>运行日志</h2>
+      <ul id="log-list"></ul>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/dist/stomp.umd.min.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      const state = {
+        restBaseInput: localStorage.getItem('inclove-rest-base') || 'http://localhost:8080',
+        wsBaseInput: localStorage.getItem('inclove-ws-base') || '',
+        token: localStorage.getItem('inclove-jwt') || '',
+        userId: localStorage.getItem('inclove-user') || '',
+        stompClient: null,
+        subscription: null,
+        heartbeatTimer: null,
+        conversationId: localStorage.getItem('inclove-conversation') || '',
+        peerUserId: localStorage.getItem('inclove-peer') || '',
+        peerPresence: '',
+        messages: [],
+        isTyping: false
+      };
+
+      const dom = {
+        restBaseInput: document.getElementById('rest-base'),
+        wsBaseInput: document.getElementById('ws-base'),
+        endpointPreview: document.getElementById('endpoint-preview'),
+        reconnectBtn: document.getElementById('reconnect-btn'),
+        authSection: document.getElementById('auth-section'),
+        registerForm: document.getElementById('register-form'),
+        registerEmail: document.getElementById('register-email'),
+        registerUser: document.getElementById('register-user'),
+        registerPassword: document.getElementById('register-password'),
+        loginForm: document.getElementById('login-form'),
+        loginEmail: document.getElementById('login-email'),
+        loginUser: document.getElementById('login-user'),
+        loginPassword: document.getElementById('login-password'),
+        accountSection: document.getElementById('account-section'),
+        statusDot: document.getElementById('status-dot'),
+        connectionStatus: document.getElementById('connection-status'),
+        currentUser: document.getElementById('current-user'),
+        logoutBtn: document.getElementById('logout-btn'),
+        conversationSection: document.getElementById('conversation-section'),
+        peerIdInput: document.getElementById('peer-id'),
+        openConversationBtn: document.getElementById('open-conversation'),
+        conversationInfo: document.getElementById('conversation-info'),
+        peerPresence: document.getElementById('peer-presence'),
+        chatSection: document.getElementById('chat-section'),
+        messages: document.getElementById('messages'),
+        messageInput: document.getElementById('message-input'),
+        sendBtn: document.getElementById('send-btn'),
+        logList: document.getElementById('log-list')
+      };
+
+      init();
+
+      function init() {
+        dom.restBaseInput.value = state.restBaseInput;
+        dom.wsBaseInput.value = state.wsBaseInput;
+        dom.peerIdInput.value = state.peerUserId;
+        updateEndpointPreview();
+        updateLayout();
+        renderMessages();
+
+        dom.restBaseInput.addEventListener('change', handleRestBaseChange);
+        dom.wsBaseInput.addEventListener('change', handleWsBaseChange);
+        dom.reconnectBtn.addEventListener('click', () => connectSocket(true));
+        dom.registerForm.addEventListener('submit', handleRegister);
+        dom.loginForm.addEventListener('submit', handleLogin);
+        dom.logoutBtn.addEventListener('click', logout);
+        dom.openConversationBtn.addEventListener('click', openConversation);
+        dom.sendBtn.addEventListener('click', sendMessage);
+        dom.messageInput.addEventListener('keydown', (evt) => {
+          if (evt.key === 'Enter' && !evt.shiftKey) {
+            evt.preventDefault();
+            sendMessage();
+          }
+        });
+        dom.messageInput.addEventListener('input', handleTyping);
+
+        if (state.token && state.userId) {
+          log('检测到已保存的登录状态，尝试连接 WebSocket。');
+          connectSocket(false);
+        }
+      }
+
+      function handleRestBaseChange() {
+        state.restBaseInput = dom.restBaseInput.value.trim();
+        localStorage.setItem('inclove-rest-base', state.restBaseInput);
+        updateEndpointPreview();
+      }
+
+      function handleWsBaseChange() {
+        state.wsBaseInput = dom.wsBaseInput.value.trim();
+        localStorage.setItem('inclove-ws-base', state.wsBaseInput);
+        updateEndpointPreview();
+      }
+
+      function normaliseBase(value) {
+        if (!value) {
+          return '';
+        }
+        let trimmed = value.trim();
+        if (!trimmed) {
+          return '';
+        }
+        if (!/^https?:\/\//i.test(trimmed)) {
+          trimmed = 'http://' + trimmed;
+        }
+        return trimmed.replace(/\/+$/, '');
+      }
+
+      function getRestBase() {
+        return normaliseBase(state.restBaseInput);
+      }
+
+      function getWsUrl() {
+        const wsBase = normaliseBase(state.wsBaseInput) || getRestBase();
+        return wsBase ? wsBase + '/ws' : '';
+      }
+
+      function updateEndpointPreview() {
+        const restBase = getRestBase();
+        const wsUrl = getWsUrl();
+        if (!restBase) {
+          dom.endpointPreview.textContent = '请填写有效的 REST API 地址（默认 http://localhost:8080）';
+          return;
+        }
+        dom.endpointPreview.textContent = `REST: ${restBase} ｜ WebSocket: ${wsUrl || '（未设置）'}`;
+      }
+
+      function updateLayout() {
+        const loggedIn = Boolean(state.token);
+        dom.authSection.classList.toggle('hidden', loggedIn);
+        dom.accountSection.classList.toggle('hidden', !loggedIn);
+        dom.conversationSection.classList.toggle('hidden', !loggedIn);
+        dom.chatSection.classList.toggle('hidden', !loggedIn || !state.conversationId || !state.peerUserId);
+        dom.currentUser.textContent = state.userId || '-';
+        dom.peerPresence.textContent = state.peerPresence || '';
+        dom.peerPresence.classList.toggle('hidden', !state.peerPresence);
+        dom.conversationInfo.textContent = state.conversationId
+          ? `当前会话 ID：${state.conversationId}，对方用户：${state.peerUserId}`
+          : '尚未建立会话。';
+      }
+
+      function log(message) {
+        const entry = document.createElement('li');
+        entry.textContent = `${new Date().toLocaleTimeString()} ${message}`;
+        dom.logList.prepend(entry);
+        while (dom.logList.children.length > 120) {
+          dom.logList.removeChild(dom.logList.lastChild);
+        }
+        console.log('[chat]', message);
+      }
+
+      async function handleRegister(event) {
+        event.preventDefault();
+        const restBase = getRestBase();
+        if (!restBase) {
+          log('请先配置有效的 REST API 地址。');
+          return;
+        }
+        const payload = {
+          email: dom.registerEmail.value.trim(),
+          userId: dom.registerUser.value.trim(),
+          rawPassword: dom.registerPassword.value
+        };
+        if (!payload.email || !payload.userId || !payload.rawPassword) {
+          log('请完整填写注册信息。');
+          return;
+        }
+        try {
+          const res = await fetch(restBase + '/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || '注册失败');
+          }
+          const data = await res.json();
+          if (!data.jwtToken) {
+            throw new Error('响应中未包含 jwtToken');
+          }
+          log('注册成功，自动完成登录。');
+          afterLogin(payload.userId, data.jwtToken);
+        } catch (error) {
+          log('注册失败：' + error.message);
+        }
+      }
+
+      async function handleLogin(event) {
+        event.preventDefault();
+        const restBase = getRestBase();
+        if (!restBase) {
+          log('请先配置有效的 REST API 地址。');
+          return;
+        }
+        const payload = {
+          email: dom.loginEmail.value.trim(),
+          userId: dom.loginUser.value.trim(),
+          rawPassword: dom.loginPassword.value
+        };
+        if (!payload.email || !payload.userId || !payload.rawPassword) {
+          log('请完整填写登录信息。');
+          return;
+        }
+        try {
+          const res = await fetch(restBase + '/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || '登录失败');
+          }
+          const data = await res.json();
+          if (!data.jwtToken) {
+            throw new Error('响应中未包含 jwtToken');
+          }
+          log('登录成功。');
+          afterLogin(payload.userId, data.jwtToken);
+        } catch (error) {
+          log('登录失败：' + error.message);
+        }
+      }
+
+      function afterLogin(userId, token) {
+        state.token = token;
+        state.userId = userId;
+        localStorage.setItem('inclove-jwt', token);
+        localStorage.setItem('inclove-user', userId);
+        updateLayout();
+        connectSocket(false);
+      }
+
+      async function logout() {
+        await disconnectSocket();
+        state.token = '';
+        state.userId = '';
+        state.conversationId = '';
+        state.peerUserId = '';
+        state.peerPresence = '';
+        state.messages = [];
+        localStorage.removeItem('inclove-jwt');
+        localStorage.removeItem('inclove-user');
+        localStorage.removeItem('inclove-conversation');
+        localStorage.removeItem('inclove-peer');
+        renderMessages();
+        updateLayout();
+        setConnectionStatus('未连接', false);
+        log('已退出登录。');
+      }
+
+      async function openConversation() {
+        if (!state.token) {
+          log('请先登录。');
+          return;
+        }
+        const restBase = getRestBase();
+        if (!restBase) {
+          log('请先设置 REST API 地址。');
+          return;
+        }
+        const peerId = dom.peerIdInput.value.trim();
+        if (!peerId) {
+          log('请输入对方用户 ID。');
+          return;
+        }
+        const headers = { Authorization: 'Bearer ' + state.token };
+        try {
+          const postRes = await fetch(restBase + '/conversation?peerUserId=' + encodeURIComponent(peerId), {
+            method: 'POST',
+            headers
+          });
+          if (!postRes.ok && postRes.status !== 409) {
+            const text = await postRes.text();
+            throw new Error(text || '开启会话失败');
+          }
+          const getRes = await fetch(restBase + '/conversation/userIdAndPeerUserId?peerUserId=' + encodeURIComponent(peerId), {
+            headers
+          });
+          if (!getRes.ok) {
+            const text = await getRes.text();
+            throw new Error(text || '查询会话失败');
+          }
+          const data = await getRes.json();
+          const conversationId = data.id || data.conversationId;
+          if (!conversationId) {
+            throw new Error('响应中未返回会话 ID');
+          }
+          const switchingPeer = state.peerUserId && state.peerUserId !== peerId;
+          state.conversationId = String(conversationId);
+          state.peerUserId = peerId;
+          state.peerPresence = '';
+          state.messages = [];
+          localStorage.setItem('inclove-conversation', state.conversationId);
+          localStorage.setItem('inclove-peer', state.peerUserId);
+          renderMessages();
+          updateLayout();
+          log(`会话已准备就绪（ID: ${state.conversationId}）。`);
+          if (!state.stompClient || !state.stompClient.connected || switchingPeer) {
+            await connectSocket(false);
+          }
+          startHeartbeat(true);
+        } catch (error) {
+          log('开启会话失败：' + error.message);
+        }
+      }
+
+      function isConversationReady() {
+        return Boolean(state.token && state.conversationId && state.peerUserId);
+      }
+
+      async function connectSocket(manualTrigger) {
+        if (!state.token) {
+          if (manualTrigger) {
+            log('尚未登录，无法建立 WebSocket。');
+          }
+          return;
+        }
+        const wsUrl = getWsUrl();
+        if (!wsUrl) {
+          log('WebSocket 端点无效，请检查设置。');
+          return;
+        }
+        await disconnectSocket();
+
+        const client = new StompJs.Client({
+          webSocketFactory: () => new SockJS(wsUrl),
+          connectHeaders: { Authorization: 'Bearer ' + state.token },
+          reconnectDelay: 5000,
+          debug: () => {}
+        });
+
+        client.onConnect = () => {
+          state.stompClient = client;
+          setConnectionStatus('已连接', true);
+          log('STOMP 已连接。');
+          state.subscription = client.subscribe('/user/queue/conversations', handleIncomingFrame);
+          if (isConversationReady()) {
+            startHeartbeat(true);
+          }
+        };
+
+        client.onStompError = (frame) => {
+          setConnectionStatus('连接异常', false);
+          log('STOMP 错误：' + (frame.headers['message'] || '未知错误'));
+        };
+
+        client.onWebSocketClose = () => {
+          setConnectionStatus('连接断开', false);
+          stopHeartbeat();
+          log('WebSocket 已断开，等待重连…');
+        };
+
+        client.onWebSocketError = () => {
+          log('WebSocket 发生错误。');
+        };
+
+        setConnectionStatus('连接中…', false);
+        client.activate();
+        state.stompClient = client;
+      }
+
+      async function disconnectSocket() {
+        stopHeartbeat();
+        if (state.subscription) {
+          try {
+            state.subscription.unsubscribe();
+          } catch (error) {
+            console.debug(error);
+          }
+          state.subscription = null;
+        }
+        if (state.stompClient) {
+          try {
+            await state.stompClient.deactivate();
+          } catch (error) {
+            console.debug(error);
+          }
+          state.stompClient = null;
+        }
+      }
+
+      function setConnectionStatus(text, connected) {
+        dom.connectionStatus.textContent = text;
+        dom.statusDot.classList.toggle('online', connected);
+      }
+
+      function sendMessage() {
+        if (!isConversationReady()) {
+          log('请先建立会话。');
+          return;
+        }
+        if (!state.stompClient || !state.stompClient.connected) {
+          log('WebSocket 尚未连接。');
+          return;
+        }
+        const content = dom.messageInput.value.trim();
+        if (!content) {
+          return;
+        }
+        const payload = {
+          packageType: 'MESSAGE',
+          recipientId: state.peerUserId,
+          conversationId: state.conversationId,
+          content
+        };
+        state.stompClient.publish({
+          destination: '/app/chat.send',
+          body: JSON.stringify(payload)
+        });
+        const localMessage = {
+          localKey: generateLocalKey(),
+          sid: null,
+          senderId: state.userId,
+          recipientId: state.peerUserId,
+          conversationId: state.conversationId,
+          content,
+          timestamp: new Date(),
+          fromSelf: true,
+          acked: false,
+          awaitingServerSid: true
+        };
+        state.messages.push(localMessage);
+        renderMessages();
+        scrollMessagesToBottom();
+        dom.messageInput.value = '';
+        state.isTyping = false;
+        sendHeartbeat(true);
+      }
+
+      function handleIncomingFrame(frame) {
+        try {
+          const payload = JSON.parse(frame.body || '{}');
+          const type = payload.packageType || (payload.content !== undefined ? 'MESSAGE' : 'ACK');
+          if (type === 'MESSAGE') {
+            handleIncomingMessage(payload);
+          } else if (type === 'ACK') {
+            handleIncomingAck(payload);
+          } else if (type === 'USER_STATUS') {
+            handleUserStatus(payload);
+          } else {
+            log('收到未知类型消息：' + frame.body);
+          }
+        } catch (error) {
+          log('解析消息失败：' + error.message);
+        }
+      }
+
+      function handleIncomingMessage(payload) {
+        const sid = payload.sid || null;
+        const senderId = payload.senderId || payload.senderID || '';
+        const recipientId = payload.recipientID || payload.recipientId || '';
+        const conversationId = payload.conversationId ? String(payload.conversationId) : '';
+        const fromSelf = senderId === state.userId;
+
+        if (fromSelf) {
+          const pending = state.messages.find((msg) => msg.fromSelf && msg.awaitingServerSid);
+          if (pending) {
+            pending.sid = sid;
+            pending.awaitingServerSid = false;
+            pending.timestamp = new Date();
+            renderMessages();
+          } else {
+            const duplicate = {
+              localKey: 'srv-' + (sid || generateLocalKey()),
+              sid,
+              senderId,
+              recipientId,
+              conversationId,
+              content: payload.content || '',
+              timestamp: new Date(),
+              fromSelf: true,
+              acked: false,
+              awaitingServerSid: false
+            };
+            state.messages.push(duplicate);
+            renderMessages();
+          }
+        } else {
+          const record = {
+            localKey: 'srv-' + (sid || generateLocalKey()),
+            sid,
+            senderId,
+            recipientId,
+            conversationId,
+            content: payload.content || '',
+            timestamp: new Date(),
+            fromSelf: false,
+            acked: true,
+            awaitingServerSid: false
+          };
+          state.messages.push(record);
+          renderMessages();
+          scrollMessagesToBottom();
+        }
+
+        if (recipientId === state.userId && sid) {
+          sendAck(payload);
+        }
+      }
+
+      function handleIncomingAck(payload) {
+        const sid = payload.sid;
+        if (!sid) {
+          return;
+        }
+        const exact = state.messages.find((msg) => msg.sid === sid && msg.fromSelf);
+        if (exact) {
+          exact.acked = true;
+          exact.awaitingServerSid = false;
+        } else {
+          const pending = state.messages.find((msg) => msg.fromSelf && !msg.sid);
+          if (pending) {
+            pending.sid = sid;
+            pending.acked = true;
+            pending.awaitingServerSid = false;
+          }
+        }
+        renderMessages();
+      }
+
+      function handleUserStatus(payload) {
+        if (!payload || !state.peerUserId) {
+          return;
+        }
+        const target = String(payload.peerId || payload.peerID || '');
+        if (target !== String(state.userId)) {
+          return;
+        }
+        if (payload.isTyping) {
+          state.peerPresence = '对方正在输入…';
+        } else if (payload.isOnline === false) {
+          state.peerPresence = '对方离线';
+        } else {
+          state.peerPresence = '对方在线';
+        }
+        updateLayout();
+      }
+
+      function sendAck(payload) {
+        if (!state.stompClient || !state.stompClient.connected) {
+          return;
+        }
+        const body = {
+          packageType: 'ACK',
+          sid: payload.sid,
+          conversationId: payload.conversationId || state.conversationId,
+          senderID: payload.senderId || payload.senderID || ''
+        };
+        state.stompClient.publish({
+          destination: '/app/chat.ack',
+          body: JSON.stringify(body)
+        });
+      }
+
+      function renderMessages() {
+        dom.messages.innerHTML = '';
+        if (!state.messages.length) {
+          const empty = document.createElement('div');
+          empty.className = 'hint';
+          empty.textContent = '暂无消息，开始聊天吧～';
+          dom.messages.appendChild(empty);
+          return;
+        }
+        state.messages.forEach((msg) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'message ' + (msg.fromSelf ? 'self' : 'peer');
+
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          const who = msg.fromSelf ? '我' : (msg.senderId || '对方');
+          meta.textContent = `${who} · ${formatTime(msg.timestamp)}`;
+          if (msg.sid) {
+            const sidSpan = document.createElement('span');
+            sidSpan.textContent = `#${msg.sid}`;
+            meta.appendChild(sidSpan);
+          }
+
+          const bubble = document.createElement('div');
+          bubble.className = 'bubble';
+          bubble.textContent = msg.content || '';
+
+          wrapper.appendChild(meta);
+          wrapper.appendChild(bubble);
+
+          if (msg.fromSelf) {
+            const ackLine = document.createElement('div');
+            ackLine.className = 'ack' + (msg.acked ? '' : ' pending');
+            ackLine.textContent = msg.acked ? '✔ 已送达并确认' : '… 等待对方确认';
+            wrapper.appendChild(ackLine);
+          }
+
+          dom.messages.appendChild(wrapper);
+        });
+      }
+
+      function scrollMessagesToBottom() {
+        dom.messages.scrollTop = dom.messages.scrollHeight;
+      }
+
+      function startHeartbeat(force) {
+        if (!isConversationReady() || !state.stompClient || !state.stompClient.connected) {
+          return;
+        }
+        stopHeartbeat();
+        sendHeartbeat(force);
+        state.heartbeatTimer = window.setInterval(() => sendHeartbeat(false), 15000);
+      }
+
+      function stopHeartbeat() {
+        if (state.heartbeatTimer) {
+          clearInterval(state.heartbeatTimer);
+          state.heartbeatTimer = null;
+        }
+      }
+
+      function sendHeartbeat(force) {
+        if (!isConversationReady() || !state.stompClient || !state.stompClient.connected) {
+          return;
+        }
+        const body = {
+          packageType: 'USER_STATUS',
+          isOnline: true,
+          isTyping: force ? state.isTyping : false,
+          peerId: state.peerUserId
+        };
+        state.stompClient.publish({
+          destination: '/app/user.heartbeat',
+          body: JSON.stringify(body)
+        });
+      }
+
+      function handleTyping() {
+        state.isTyping = dom.messageInput.value.trim().length > 0;
+        if (state.isTyping) {
+          sendHeartbeat(true);
+        }
+      }
+
+      function formatTime(value) {
+        if (!value) {
+          return '';
+        }
+        const date = value instanceof Date ? value : new Date(value);
+        return new Intl.DateTimeFormat('zh-CN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }).format(date);
+      }
+
+      function generateLocalKey() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+        return 'local-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+      }
+    })();
+  </script>
+</body>
+</html>
