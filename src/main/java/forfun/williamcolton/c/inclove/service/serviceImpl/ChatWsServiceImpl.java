@@ -43,7 +43,7 @@ public class ChatWsServiceImpl implements ChatWsService {
         String sid = SIDSnowflakeBuilder.getNextSID();
 
         Message message = modelMapper.map(sendMessageDto, Message.class);
-        message.setMessageId(sid);
+        message.setId(sid);
         message.setSenderId(userId);
         messageService.saveMessage(message);
 

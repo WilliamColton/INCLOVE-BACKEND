@@ -9,7 +9,7 @@ public class JSONSerialization {
 
     @Bean
     public ObjectMapper buildObjectMapper() {
-        return new ObjectMapper();
+        return new ObjectMapper().findAndRegisterModules();
     }
 
 }

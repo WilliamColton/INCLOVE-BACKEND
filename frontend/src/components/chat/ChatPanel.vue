@@ -90,7 +90,7 @@ const sendLoading = ref(false);
 const conversationLoading = ref(false);
 const connectionStatus = ref('disconnected');
 let heartbeatTimer;
-const HEARTBEAT_INTERVAL_MS = 5000;
+const HEARTBEAT_INTERVAL_MS = 2000;
 let localMessageCounter = 0;
 
 const wsUrl = import.meta.env.VITE_WS_BASE_URL || 'http://localhost:8080/ws';
