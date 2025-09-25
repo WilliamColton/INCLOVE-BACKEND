@@ -36,8 +36,8 @@ public class ProfileController {
     }
 
     @GetMapping("/me")
-    public GetUserIdDto getCurrentUserId(@Auth Authentication authentication) {
-        return new GetUserIdDto((String) authentication.getPrincipal());
+    public GetUserIdDto getCurrentUserId(@Auth String userId) {
+        return new GetUserIdDto(userId);
     }
 
 }

@@ -1,6 +1,7 @@
 package forfun.williamcolton.c.inclove.config;
 
 import forfun.williamcolton.c.inclove.utils.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Configuration;
@@ -23,8 +24,10 @@ import java.util.Objects;
 
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 @EnableWebSocketMessageBroker
 public class WsConfig implements WebSocketMessageBrokerConfigurer {
+    
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
@@ -43,9 +46,7 @@ public class WsConfig implements WebSocketMessageBrokerConfigurer {
             @Override
             public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                if (Objects.nonNull(accessor) &&
-                        StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    log.info(accessor.toString());
+                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
                     var authorizationHeader = accessor.getFirstNativeHeader("Authorization");
                     if (Objects.nonNull(authorizationHeader) && authorizationHeader.startsWith("Bearer ")) {
                         String token = authorizationHeader.substring(7);
@@ -56,9 +57,11 @@ public class WsConfig implements WebSocketMessageBrokerConfigurer {
                             return message;
                         }
                     }
+                    return null;
                 }
-                return null;
+                return message;
             }
         });
     }
+
 }
