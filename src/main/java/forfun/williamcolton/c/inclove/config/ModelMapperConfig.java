@@ -1,6 +1,7 @@
 package forfun.williamcolton.c.inclove.config;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,6 +12,7 @@ public class ModelMapperConfig {
     public ModelMapper createModelMapper() {
         var modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setFieldMatchingEnabled(true).setFieldAccessLevel(org.modelmapper.config.Configuration.AccessLevel.PRIVATE);
+        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
         return modelMapper;
     }
 

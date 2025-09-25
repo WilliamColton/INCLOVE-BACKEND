@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 public class MessageServiceImpl extends BaseServiceImpl<MessageMapper, Message> implements MessageService {
 
     @Override
-    public void saveMessage() {
-
+    public void saveMessage(Message message) {
+        save(message);
     }
 
 }
