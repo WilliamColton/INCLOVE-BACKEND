@@ -1,5 +1,6 @@
 package forfun.williamcolton.c.inclove.controller;
 
+import forfun.williamcolton.c.inclove.annotation.Auth;
 import forfun.williamcolton.c.inclove.dto.profile.req.CreateProfileDto;
 import forfun.williamcolton.c.inclove.dto.profile.resp.GetUserIdDto;
 import forfun.williamcolton.c.inclove.entity.UserProfile;
@@ -35,7 +36,7 @@ public class ProfileController {
     }
 
     @GetMapping("/me")
-    public GetUserIdDto getCurrentUserId(Authentication authentication) {
+    public GetUserIdDto getCurrentUserId(@Auth Authentication authentication) {
         return new GetUserIdDto((String) authentication.getPrincipal());
     }
 
